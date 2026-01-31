@@ -180,6 +180,25 @@ voice-memo-task-app/
 - `GET /api/categories` - Get all categories
 - `POST /api/categories` - Create a category
 
+### Integrations
+- `POST /api/integrations/notion/sync` - Sync task to Notion
+- `POST /api/integrations/calendar/sync` - Sync task to Google Calendar
+- `POST /api/integrations/gmail/send-reminder` - Send email reminder
+- `POST /api/integrations/gmail/send-digest` - Send task digest email
+- `GET/POST /api/integrations/settings` - Manage integration settings
+- `GET /api/integrations/google/auth` - Initiate Google OAuth
+- `GET /api/integrations/google/callback` - Google OAuth callback
+
+## Integrations
+
+The app supports the following integrations:
+
+- **📝 Notion**: Sync tasks to your Notion database
+- **📅 Google Calendar**: Create calendar events for tasks with due dates
+- **📧 Gmail**: Send email reminders and task digests
+
+For detailed setup instructions, see [INTEGRATIONS.md](./INTEGRATIONS.md)
+
 ## Roadmap
 
 ### Phase 1: MVP ✅
@@ -189,10 +208,11 @@ voice-memo-task-app/
 - [x] Task management UI
 - [x] Basic categorization
 
-### Phase 2: Integrations (Next)
-- [ ] Notion sync
-- [ ] Google Calendar integration
-- [ ] Gmail reminders
+### Phase 2: Integrations ✅
+- [x] Notion sync
+- [x] Google Calendar integration
+- [x] Gmail reminders
+- [x] Integration settings UI
 - [ ] Multi-user authentication
 
 ### Phase 3: Advanced Features

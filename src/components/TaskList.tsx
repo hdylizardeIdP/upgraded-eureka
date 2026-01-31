@@ -18,6 +18,7 @@ export default function TaskList({
 }: TaskListProps) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
 
   const filteredTasks = tasks.filter(task => {
     const statusMatch = filter === 'all' || task.status === filter;
@@ -44,6 +45,76 @@ export default function TaskList({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleSyncToNotion = async (taskId: string) => {
+    setSyncing(taskId);
+    try {
+      const response = await fetch('/api/integrations/notion/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to sync to Notion');
+      }
+
+      alert('Task synced to Notion successfully!');
+      // Trigger task update to refresh the UI
+      onTaskUpdate(taskId, {});
+    } catch (error: any) {
+      alert(error.message || 'Failed to sync to Notion');
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const handleSyncToCalendar = async (taskId: string) => {
+    setSyncing(taskId);
+    try {
+      const response = await fetch('/api/integrations/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to sync to Calendar');
+      }
+
+      alert('Task synced to Google Calendar successfully!');
+      // Trigger task update to refresh the UI
+      onTaskUpdate(taskId, {});
+    } catch (error: any) {
+      alert(error.message || 'Failed to sync to Calendar');
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const handleSendReminder = async (taskId: string) => {
+    setSyncing(taskId);
+    try {
+      const response = await fetch('/api/integrations/gmail/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send reminder');
+      }
+
+      alert('Reminder email sent successfully!');
+    } catch (error: any) {
+      alert(error.message || 'Failed to send reminder');
+    } finally {
+      setSyncing(null);
+    }
   };
 
   return (
@@ -139,27 +210,57 @@ export default function TaskList({
                   </div>
                 </div>
 
-                <div className="flex space-x-2 ml-4">
-                  <select
-                    value={task.status}
-                    onChange={(e) => onTaskUpdate(task.id, { status: e.target.value as any })}
-                    className="text-xs px-2 py-1 border rounded"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                <div className="flex flex-col space-y-2 ml-4">
+                  <div className="flex space-x-2">
+                    <select
+                      value={task.status}
+                      onChange={(e) => onTaskUpdate(task.id, { status: e.target.value as any })}
+                      className="text-xs px-2 py-1 border rounded"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
 
-                  <button
-                    onClick={() => onTaskDelete(task.id)}
-                    className="text-red-600 hover:text-red-800 p-1"
-                    title="Delete task"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                    <button
+                      onClick={() => onTaskDelete(task.id)}
+                      className="text-red-600 hover:text-red-800 p-1"
+                      title="Delete task"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Integration Sync Buttons */}
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleSyncToNotion(task.id)}
+                      disabled={syncing === task.id || task.synced_to_notion}
+                      className="text-xs px-2 py-1 bg-gray-800 text-white rounded hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={task.synced_to_notion ? 'Already synced to Notion' : 'Sync to Notion'}
+                    >
+                      {syncing === task.id ? '...' : '📝'}
+                    </button>
+                    <button
+                      onClick={() => handleSyncToCalendar(task.id)}
+                      disabled={syncing === task.id || task.synced_to_calendar || !task.due_date}
+                      className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={task.synced_to_calendar ? 'Already synced to Calendar' : !task.due_date ? 'Add due date first' : 'Sync to Calendar'}
+                    >
+                      {syncing === task.id ? '...' : '📅'}
+                    </button>
+                    <button
+                      onClick={() => handleSendReminder(task.id)}
+                      disabled={syncing === task.id}
+                      className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                      title="Send email reminder"
+                    >
+                      {syncing === task.id ? '...' : '📧'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

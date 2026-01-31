@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import TaskList from '@/components/TaskList';
+import IntegrationSettings from '@/components/IntegrationSettings';
 import { Task, Category } from '@/lib/types';
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'integrations'>('tasks');
 
   // Load tasks and categories on mount
   useEffect(() => {
@@ -165,19 +167,50 @@ export default function Home() {
           </div>
         )}
 
-        {/* Voice Recorder */}
-        <VoiceRecorder
-          onRecordingComplete={handleRecordingComplete}
-          onTranscriptionStart={() => setProcessingStatus('Processing...')}
-        />
+        {/* Tabs */}
+        <div className="mb-6 bg-white rounded-lg shadow-lg p-1 flex space-x-1">
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'tasks'
+                ? 'bg-blue-600 text-white'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            📋 Tasks
+          </button>
+          <button
+            onClick={() => setActiveTab('integrations')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'integrations'
+                ? 'bg-blue-600 text-white'
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            🔗 Integrations
+          </button>
+        </div>
 
-        {/* Task List */}
-        <TaskList
-          tasks={tasks}
-          categories={categories}
-          onTaskUpdate={handleTaskUpdate}
-          onTaskDelete={handleTaskDelete}
-        />
+        {/* Content */}
+        {activeTab === 'tasks' ? (
+          <>
+            {/* Voice Recorder */}
+            <VoiceRecorder
+              onRecordingComplete={handleRecordingComplete}
+              onTranscriptionStart={() => setProcessingStatus('Processing...')}
+            />
+
+            {/* Task List */}
+            <TaskList
+              tasks={tasks}
+              categories={categories}
+              onTaskUpdate={handleTaskUpdate}
+              onTaskDelete={handleTaskDelete}
+            />
+          </>
+        ) : (
+          <IntegrationSettings />
+        )}
 
         {/* Stats Footer */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
